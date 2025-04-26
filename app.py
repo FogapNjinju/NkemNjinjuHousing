@@ -87,9 +87,15 @@ def save_cost(apartment, location, cost_type, amount, description, receipt_img=N
     costs.to_csv(costs_file, index=False)
 
 def delete_tenant(tenant_id):
+    # Delete tenant from tenants.csv
     tenants = pd.read_csv(tenants_file)
     tenants = tenants[tenants["Tenant ID"] != tenant_id]
     tenants.to_csv(tenants_file, index=False)
+
+    # Also delete all payments for that tenant
+    payments = pd.read_csv(payments_file)
+    payments = payments[payments["Tenant ID"] != tenant_id]
+    payments.to_csv(payments_file, index=False)
 
 def delete_payment(payment_index):
     payments = pd.read_csv(payments_file)
@@ -231,7 +237,19 @@ elif choice == "Payment Status":
 elif choice == "All Tenants":
     st.subheader("📋 List of All Tenants")
     tenants, _, _ = load_data()
-    st.dataframe(tenants)
+    for idx, row in tenants.iterrows():
+        with st.expander(f"{row['Name']} - Apartment {row['Apartment']}"):
+            st.markdown(f"**Tenant ID:** {row['Tenant ID']}")
+            st.markdown(f"**Phone:** {row['Phone']}")
+            st.markdown(f"**Location:** {row['Location']}")
+            st.markdown(f"**Registered:** {row['Registration Date']}")
+            st.warning("⚠️ Deleting this tenant will also delete all their payment records.")
+            confirm_delete = st.checkbox(f"✅ Confirm delete {row['Name']} and their payments", key=f"confirm_delete_{idx}")
+            if confirm_delete:
+                if st.button(f"🗑️ Delete {row['Name']}", key=f"delete_{idx}"):
+                    delete_tenant(row['Tenant ID'])
+                    st.success(f"✅ Tenant {row['Name']} and their payments deleted successfully!")
+                    st.experimental_rerun()
 
 elif choice == "Reports & Charts":
     st.subheader("📊 Reports & Charts")
@@ -261,10 +279,10 @@ elif choice == "Reports & Charts":
                     st.markdown(f"**Date:** {row['Date']}")
                     if 'Receipt' in row and pd.notna(row['Receipt']) and os.path.exists(row['Receipt']):
                         st.image(row['Receipt'], width=300)
-                    
-                    confirm_delete = st.checkbox(f"✅ Confirm delete Cost ID {idx}", key=f"confirm_{idx}")
+
+                    confirm_delete = st.checkbox(f"✅ Confirm delete Cost ID {idx}", key=f"confirm_cost_{idx}")
                     if confirm_delete:
                         if st.button(f"🗑️ Delete Cost ID {idx}", key=f"delete_cost_{idx}"):
                             delete_cost(idx)
                             st.success(f"✅ Deleted cost record {idx} successfully!")
-                            st.experimental_rerun() 
+                            st.experimental_rerun()
