@@ -4,7 +4,7 @@ import datetime
 import os
 import plotly.express as px
 from PIL import Image
-import zipfile
+#import zipfile
 import io
 
 # Define file paths
