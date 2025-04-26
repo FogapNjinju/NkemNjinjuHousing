@@ -234,7 +234,7 @@ elif choice == "All Tenants":
     st.dataframe(tenants)
 
 elif choice == "Reports & Charts":
-    st.subheader("📊 Reports & Charts")
+    st.subheader("📊  Reports & Charts")
     _, payments, costs = load_data()
 
     if not payments.empty:
