@@ -190,7 +190,7 @@ elif choice == "Record Payment":
 elif choice == "Payment Status":
     st.subheader("📊 Payment Status Overview")
     tenants, payments = load_data()
-    rent_amount = st.number_input("Monthly Rent Amount (default: 100)", value=100, help="Enter the monthly rent amount.")
+    rent_amount = st.number_input("Monthly Rent Amount (default: 50,000)", value=50000, help="Enter the monthly rent amount.")
 
     current_month = datetime.datetime.now().strftime("%Y-%m")
     st.markdown(f"### 🗓️ Current Month: {current_month}")
