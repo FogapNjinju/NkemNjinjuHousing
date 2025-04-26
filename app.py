@@ -114,7 +114,7 @@ def get_due_months(tenant_id, registration_date, rent_amount=100):
     return due_months, total_due
 
 # Styling
-st.set_page_config(page_title="Tenant Manager", layout="wide")
+st.set_page_config(page_title="Tenants Manager", layout="wide")
 with st.sidebar:
     st.title("🏠 Tenant Manager")
     menu = [
@@ -127,9 +127,8 @@ with st.sidebar:
     ]
     choice = st.selectbox("Navigation", [item[0] for item in menu])
 
-st.markdown("""
-    <style>
-        .reportview-container { background: #f0f4f8; padding: 1rem; }
+st.markdown("""<style>
+        .reportview-container { background: #f5f5f5; padding: 1rem; }
         .block-container { padding: 2rem; background-color: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .stButton button { background-color: #0072E3; color: white; border-radius: 10px; padding: 0.5em 1.5em; }
         .stTextInput > div > div > input { border-radius: 10px; }
@@ -137,11 +136,9 @@ st.markdown("""
         .stFileUploader { border-radius: 10px; }
         h1, h2, h3 { color: #0072E3; }
         .fa { margin-right: 10px; }
-        body { background-image: url('https://www.w3schools.com/w3images/forest.jpg'); background-size: cover; }
-    </style>
-""", unsafe_allow_html=True)
+    </style>""", unsafe_allow_html=True)
 
-st.title("📋 Nkem-Njinju Tenants Management System")
+st.title("📋 Nkem-Njinju Tenant Management System")
 
 icon_dict = dict(menu)
 icon = icon_dict.get(choice, "fa-cogs")
@@ -149,7 +146,7 @@ icon = icon_dict.get(choice, "fa-cogs")
 st.markdown(f"<h3><i class='fas {icon}'></i> {choice}</h3>", unsafe_allow_html=True)
 
 # --------------- PAGES ---------------
-# Register Tenant
+
 if choice == "Register Tenant":
     st.subheader("📅 Register a New Tenant")
     tenant_id = st.text_input("Tenant ID")
@@ -165,7 +162,6 @@ if choice == "Register Tenant":
         else:
             st.warning("⚠️ Please fill in all required fields.")
 
-# Record Payment
 elif choice == "Record Payment":
     st.subheader("💳 Record a Payment")
     tenants, _, _ = load_data()
@@ -190,7 +186,6 @@ elif choice == "Record Payment":
         save_payment(selected_id, month, amount, receipt, location)
         st.success("✅ Payment recorded successfully.")
 
-# Record Cost
 elif choice == "Record Cost":
     st.subheader("🛠️ Record an Apartment Cost")
     _, _, _ = load_data()
@@ -211,7 +206,6 @@ elif choice == "Record Cost":
         else:
             st.warning("⚠️ Please fill in the apartment and cost amount.")
 
-# Payment Status
 elif choice == "Payment Status":
     st.subheader("📊 Payment Status Overview")
     tenants, payments, _ = load_data()
@@ -234,13 +228,11 @@ elif choice == "Payment Status":
             st.markdown(f"**Total Due:** {total_due} FCFA")
             st.markdown(f"**Due Months:** {', '.join(due_months)}")
 
-# All Tenants
 elif choice == "All Tenants":
     st.subheader("📋 List of All Tenants")
     tenants, _, _ = load_data()
     st.dataframe(tenants)
 
-# Reports & Charts
 elif choice == "Reports & Charts":
     st.subheader("📊 Reports & Charts")
     _, payments, costs = load_data()
@@ -275,4 +267,4 @@ elif choice == "Reports & Charts":
                         if st.button(f"🗑️ Delete Cost ID {idx}", key=f"delete_cost_{idx}"):
                             delete_cost(idx)
                             st.success(f"✅ Deleted cost record {idx} successfully!")
-                            st.experimental_rerun()
+                            st.experimental_rerun() 
