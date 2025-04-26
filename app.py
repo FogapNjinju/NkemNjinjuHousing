@@ -265,18 +265,18 @@ elif choice == "Reports & Charts":
         st.info("No payments recorded yet.")
 
     st.subheader("📥 Download All Receipts")
-    if os.listdir(receipts_folder):
-        zip_buffer = io.BytesIO()
-        with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-            for filename in os.listdir(receipts_folder):
-                filepath = os.path.join(receipts_folder, filename)
-                zip_file.write(filepath, arcname=filename)
-        zip_buffer.seek(0)
-        st.download_button(
-            label="⬇️ Download Receipts as ZIP",
-            data=zip_buffer,
-            file_name="all_receipts.zip",
-            mime="application/zip"
-        )
-    else:
-        st.info("No receipts found to download.")
+    # if os.listdir(receipts_folder):
+    #     zip_buffer = io.BytesIO()
+    #     with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+    #         for filename in os.listdir(receipts_folder):
+    #             filepath = os.path.join(receipts_folder, filename)
+    #             zip_file.write(filepath, arcname=filename)
+    #     zip_buffer.seek(0)
+    #     st.download_button(
+    #         label="⬇️ Download Receipts as ZIP",
+    #         data=zip_buffer,
+    #         file_name="all_receipts.zip",
+    #         mime="application/zip"
+    #     )
+    # else:
+    #     st.info("No receipts found to download.")
