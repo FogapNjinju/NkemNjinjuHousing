@@ -141,7 +141,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("📋 Nkem-Njinju Tenant Management System")
+st.title("📋 Nkem-Njinju Tenants Management System")
 
 icon_dict = dict(menu)
 icon = icon_dict.get(choice, "fa-cogs")
