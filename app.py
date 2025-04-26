@@ -8,7 +8,7 @@ from PIL import Image
 # Define file paths
 tenants_file = "tenants.csv"
 payments_file = "payments.csv"
-costs_file = "costs.csv"  # <-- new
+costs_file = "costs.csv"
 receipts_folder = "receipts"
 
 # Initialize CSV files and folders if not present
@@ -19,8 +19,8 @@ def init_files():
     if not os.path.exists(payments_file):
         df = pd.DataFrame(columns=["Tenant ID", "Month", "Amount", "Date", "Receipt", "Location"])
         df.to_csv(payments_file, index=False)
-    if not os.path.exists(costs_file):  # <-- initialize cost file
-        df = pd.DataFrame(columns=["Apartment", "Location", "Cost Type", "Amount", "Description", "Date", "Receipt"])  # <-- added Receipt
+    if not os.path.exists(costs_file):
+        df = pd.DataFrame(columns=["Apartment", "Location", "Cost Type", "Amount", "Description", "Date", "Receipt"])
         df.to_csv(costs_file, index=False)
     if not os.path.exists(receipts_folder):
         os.makedirs(receipts_folder)
@@ -81,7 +81,7 @@ def save_cost(apartment, location, cost_type, amount, description, receipt_img=N
         "Amount": amount,
         "Description": description,
         "Date": datetime.datetime.now().strftime("%Y-%m-%d"),
-        "Receipt": receipt_path  # <-- Save receipt path
+        "Receipt": receipt_path
     }])
     costs = pd.concat([costs, new_cost], ignore_index=True)
     costs.to_csv(costs_file, index=False)
@@ -127,8 +127,9 @@ with st.sidebar:
     ]
     choice = st.selectbox("Navigation", [item[0] for item in menu])
 
-st.markdown("""<style>
-        .reportview-container { background: #f5f5f5; padding: 1rem; }
+st.markdown("""
+    <style>
+        .reportview-container { background: #f0f4f8; padding: 1rem; }
         .block-container { padding: 2rem; background-color: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .stButton button { background-color: #0072E3; color: white; border-radius: 10px; padding: 0.5em 1.5em; }
         .stTextInput > div > div > input { border-radius: 10px; }
@@ -136,7 +137,9 @@ st.markdown("""<style>
         .stFileUploader { border-radius: 10px; }
         h1, h2, h3 { color: #0072E3; }
         .fa { margin-right: 10px; }
-    </style>""", unsafe_allow_html=True)
+        body { background-image: url('https://www.w3schools.com/w3images/forest.jpg'); background-size: cover; }
+    </style>
+""", unsafe_allow_html=True)
 
 st.title("📋 Nkem-Njinju Tenant Management System")
 
@@ -146,7 +149,7 @@ icon = icon_dict.get(choice, "fa-cogs")
 st.markdown(f"<h3><i class='fas {icon}'></i> {choice}</h3>", unsafe_allow_html=True)
 
 # --------------- PAGES ---------------
-
+# Register Tenant
 if choice == "Register Tenant":
     st.subheader("📅 Register a New Tenant")
     tenant_id = st.text_input("Tenant ID")
@@ -162,6 +165,7 @@ if choice == "Register Tenant":
         else:
             st.warning("⚠️ Please fill in all required fields.")
 
+# Record Payment
 elif choice == "Record Payment":
     st.subheader("💳 Record a Payment")
     tenants, _, _ = load_data()
@@ -186,6 +190,7 @@ elif choice == "Record Payment":
         save_payment(selected_id, month, amount, receipt, location)
         st.success("✅ Payment recorded successfully.")
 
+# Record Cost
 elif choice == "Record Cost":
     st.subheader("🛠️ Record an Apartment Cost")
     _, _, _ = load_data()
@@ -194,10 +199,10 @@ elif choice == "Record Cost":
     cost_type = st.selectbox("Cost Type", ["Water", "Light", "Repair", "Other"])
     amount = st.number_input("Cost Amount", min_value=0.0)
     description = st.text_area("Description")
-    receipt = st.file_uploader("Upload Cost Receipt (optional)", type=["png", "jpg", "jpeg"])  # <-- add this
+    receipt = st.file_uploader("Upload Cost Receipt (optional)", type=["png", "jpg", "jpeg"])
 
     if receipt:
-        st.image(receipt, width=100, caption="Receipt Preview")  # optional preview
+        st.image(receipt, width=100, caption="Receipt Preview")
 
     if st.button("Save Cost"):
         if apartment and amount > 0:
@@ -206,6 +211,7 @@ elif choice == "Record Cost":
         else:
             st.warning("⚠️ Please fill in the apartment and cost amount.")
 
+# Payment Status
 elif choice == "Payment Status":
     st.subheader("📊 Payment Status Overview")
     tenants, payments, _ = load_data()
@@ -228,32 +234,28 @@ elif choice == "Payment Status":
             st.markdown(f"**Total Due:** {total_due} FCFA")
             st.markdown(f"**Due Months:** {', '.join(due_months)}")
 
+# All Tenants
 elif choice == "All Tenants":
     st.subheader("📋 List of All Tenants")
     tenants, _, _ = load_data()
     st.dataframe(tenants)
 
+# Reports & Charts
 elif choice == "Reports & Charts":
-    st.subheader("📊  Reports & Charts")
+    st.subheader("📊 Reports & Charts")
     _, payments, costs = load_data()
 
     if not payments.empty:
         st.markdown("### 💳 Payment Analysis by Location")
         payment_summary_location = payments.groupby("Location").agg({"Amount": "sum"}).reset_index()
-        st.write("Total payments by location:")
         st.dataframe(payment_summary_location)
-        
-        # Bar chart of payment totals by location
         fig = px.bar(payment_summary_location, x="Location", y="Amount", title="Total Payments by Location")
         st.plotly_chart(fig)
 
     if not costs.empty:
         st.markdown("### 🛠️ Cost Analysis by Location")
         cost_summary_location = costs.groupby("Location").agg({"Amount": "sum"}).reset_index()
-        st.write("Total costs by location:")
         st.dataframe(cost_summary_location)
-
-        # Bar chart of cost totals by location
         fig = px.bar(cost_summary_location, x="Location", y="Amount", title="Total Costs by Location")
         st.plotly_chart(fig)
 
@@ -267,3 +269,10 @@ elif choice == "Reports & Charts":
                     st.markdown(f"**Date:** {row['Date']}")
                     if 'Receipt' in row and pd.notna(row['Receipt']) and os.path.exists(row['Receipt']):
                         st.image(row['Receipt'], width=300)
+                    
+                    confirm_delete = st.checkbox(f"✅ Confirm delete Cost ID {idx}", key=f"confirm_{idx}")
+                    if confirm_delete:
+                        if st.button(f"🗑️ Delete Cost ID {idx}", key=f"delete_cost_{idx}"):
+                            delete_cost(idx)
+                            st.success(f"✅ Deleted cost record {idx} successfully!")
+                            st.experimental_rerun()
