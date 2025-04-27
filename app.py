@@ -127,7 +127,7 @@ def get_total_paid(tenant_id):
 # Styling
 st.set_page_config(page_title="Tenants Manager", layout="wide")
 with st.sidebar:
-    st.title("🏠 Tenant Manager")
+    st.title("🏠 Tenants Manager")
     menu = [
         ("Register Tenant", "fa-user-plus"),
         ("Record Payment", "fa-credit-card"),
@@ -149,7 +149,7 @@ st.markdown("""<style>
         .fa { margin-right: 10px; }
     </style>""", unsafe_allow_html=True)
 
-st.title("📋 Nkem-Njinju Tenant Management System")
+st.title("📋 Nkem-Njinju Tenants Management System")
 
 icon_dict = dict(menu)
 icon = icon_dict.get(choice, "fa-cogs")
