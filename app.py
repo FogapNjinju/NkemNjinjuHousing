@@ -124,7 +124,7 @@ def get_total_paid(tenant_id):
     return payments[payments["Tenant ID"] == tenant_id]["Amount"].sum()
 
 # --- Streamlit App ---
-st.set_page_config(page_title="Tenants Manager", layout="wide")
+st.set_page_config(page_title="Tenant Manager", layout="wide")
 with st.sidebar:
     st.title("🏠 Tenants Manager")
     menu = ["Register Tenant", "Record Payment", "Record Cost", "Payment Status", "All Tenants", "Reports & Charts"]
