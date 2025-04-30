@@ -245,36 +245,94 @@ elif choice == "All Tenants":
 
 elif choice == "Reports & Charts":
     st.subheader("📊 Reports & Charts")
-    _, payments, costs = load_data()
 
-    if not payments.empty:
-        st.markdown("### 💳 Payment Analysis by Location")
-        payment_summary_location = payments.groupby("Location").agg({"Amount": "sum"}).reset_index()
-        st.dataframe(payment_summary_location)
-        fig = px.bar(payment_summary_location, x="Location", y="Amount", title="Total Payments by Location")
-        st.plotly_chart(fig)
+    # Load data
+    tenants, payments, costs = load_data()
 
-    if not costs.empty:
-        st.markdown("### 🛠️ Cost Analysis by Location")
-        cost_summary_location = costs.groupby("Location").agg({"Amount": "sum"}).reset_index()
-        st.dataframe(cost_summary_location)
-        fig = px.bar(cost_summary_location, x="Location", y="Amount", title="Total Costs by Location")
-        st.plotly_chart(fig)
+    # Convert 'Date' columns to datetime
+    payments['Date'] = pd.to_datetime(payments['Date'], errors='coerce')
+    costs['Date'] = pd.to_datetime(costs['Date'], errors='coerce')
 
-        st.subheader("📸 View Cost Receipts by Location")
-        for location in costs["Location"].unique():
-            location_costs = costs[costs["Location"] == location]
-            with st.expander(f"Costs for Location: {location}"):
-                for idx, row in location_costs.iterrows():
-                    st.markdown(f"**Apartment:** {row['Apartment']} - **Cost Type:** {row['Cost Type']} ({row['Amount']} FCFA)")
-                    st.markdown(f"**Description:** {row['Description']}")
-                    st.markdown(f"**Date:** {row['Date']}")
-                    if 'Receipt' in row and pd.notna(row['Receipt']) and os.path.exists(row['Receipt']):
-                        st.image(row['Receipt'], width=300)
+    # Sidebar filters
+    st.sidebar.header("📅 Filters")
+    min_date = min(payments['Date'].min(), costs['Date'].min())
+    max_date = max(payments['Date'].max(), costs['Date'].max())
+    start_date = st.sidebar.date_input("Start Date", min_value=min_date.date(), max_value=max_date.date(), value=min_date.date())
+    end_date = st.sidebar.date_input("End Date", min_value=min_date.date(), max_value=max_date.date(), value=max_date.date())
 
-                    confirm_delete = st.checkbox(f"✅ Confirm delete Cost ID {idx}", key=f"confirm_cost_{idx}")
-                    if confirm_delete:
-                        if st.button(f"🗑️ Delete Cost ID {idx}", key=f"delete_cost_{idx}"):
-                            delete_cost(idx)
-                            st.success(f"✅ Deleted cost record {idx} successfully!")
-                            st.experimental_rerun()
+    locations = tenants['Location'].unique().tolist()
+    selected_locations = st.sidebar.multiselect("Select Locations", options=locations, default=locations)
+
+    # Filter data based on selections
+    payments_filtered = payments[
+        (payments['Date'].dt.date >= start_date) &
+        (payments['Date'].dt.date <= end_date) &
+        (payments['Location'].isin(selected_locations))
+    ]
+    costs_filtered = costs[
+        (costs['Date'].dt.date >= start_date) &
+        (costs['Date'].dt.date <= end_date) &
+        (costs['Location'].isin(selected_locations))
+    ]
+
+    # Merge payments with tenants to get tenant names
+    payments_filtered = payments_filtered.merge(tenants[['Tenant ID', 'Name']], on='Tenant ID', how='left')
+
+    # KPIs
+    total_payments = payments_filtered['Amount'].sum()
+    total_costs = costs_filtered['Amount'].sum()
+    net_income = total_payments - total_costs
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("💰 Total Payments", f"{total_payments:,.0f} FCFA")
+    col2.metric("🛠️ Total Costs", f"{total_costs:,.0f} FCFA")
+    col3.metric("📈 Net Income", f"{net_income:,.0f} FCFA")
+
+    # Top 5 Paying Tenants
+    st.markdown("### 👑 Top 5 Paying Tenants")
+    top_tenants = payments_filtered.groupby("Name")["Amount"].sum().sort_values(ascending=False).head(5).reset_index()
+    fig_top_tenants = px.bar(top_tenants, x="Name", y="Amount", title="Top 5 Paying Tenants")
+    st.plotly_chart(fig_top_tenants, use_container_width=True)
+
+    # Apartments with Highest Costs
+    st.markdown("### 🏢 Apartments with Highest Costs")
+    top_apartments = costs_filtered.groupby("Apartment")["Amount"].sum().sort_values(ascending=False).head(5).reset_index()
+    fig_top_apartments = px.bar(top_apartments, x="Apartment", y="Amount", title="Top 5 Apartments by Costs")
+    st.plotly_chart(fig_top_apartments, use_container_width=True)
+
+    # Payment Trend Over Time
+    st.markdown("### 📈 Payment Trend Over Time")
+    payments_trend = payments_filtered.groupby(payments_filtered['Date'].dt.to_period('M'))['Amount'].sum().reset_index()
+    payments_trend['Date'] = payments_trend['Date'].dt.to_timestamp()
+    fig_payments_trend = px.line(payments_trend, x='Date', y='Amount', title='Monthly Payment Trend')
+    st.plotly_chart(fig_payments_trend, use_container_width=True)
+
+    # Cost Distribution Pie Chart
+    st.markdown("### 🥧 Cost Distribution by Type")
+    cost_distribution = costs_filtered.groupby("Cost Type")["Amount"].sum().reset_index()
+    fig_cost_pie = px.pie(cost_distribution, names="Cost Type", values="Amount", title="Cost Distribution")
+    st.plotly_chart(fig_cost_pie, use_container_width=True)
+
+    # Payment Amount Histogram
+    st.markdown("### 📊 Payment Amount Distribution")
+    fig_payment_hist = px.histogram(payments_filtered, x="Amount", nbins=20, title="Distribution of Payment Amounts")
+    st.plotly_chart(fig_payment_hist, use_container_width=True)
+
+    # View Cost Receipts by Location
+    st.subheader("📸 View Cost Receipts by Location")
+    for location in costs_filtered["Location"].unique():
+        location_costs = costs_filtered[costs_filtered["Location"] == location]
+        with st.expander(f"Costs for Location: {location}"):
+            for idx, row in location_costs.iterrows():
+                st.markdown(f"**Apartment:** {row['Apartment']} - **Cost Type:** {row['Cost Type']} ({row['Amount']} FCFA)")
+                st.markdown(f"**Description:** {row['Description']}")
+                st.markdown(f"**Date:** {row['Date'].date()}")
+                if pd.notna(row['Receipt']) and os.path.exists(row['Receipt']):
+                    st.image(row['Receipt'], width=300)
+
+                confirm_delete = st.checkbox(f"✅ Confirm delete Cost ID {idx}", key=f"confirm_cost_{idx}")
+                if confirm_delete:
+                    if st.button(f"🗑️ Delete Cost ID {idx}", key=f"delete_cost_{idx}"):
+                        delete_cost(idx)
+                        st.success(f"✅ Deleted cost record {idx} successfully!")
+                        st.experimental_rerun()
